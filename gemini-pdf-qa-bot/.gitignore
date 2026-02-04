@@ -1,0 +1,10 @@
+.env
+chroma_db*/
+*.pyc
+__pycache__/
+.venv/
+venv/
+*.pdf
+*.log
+.DS_Store
+chat_export_*.txt
