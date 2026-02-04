@@ -77,7 +77,7 @@ class ChatInterface:
         try:
             with open(filename, 'w', encoding='utf-8') as f:
                 f.write("=" * 80 + "\n")
-                f.write("GEMINI PDF Q&A - CHAT EXPORT\n")
+                f.write("PDF Q&A - CHAT EXPORT\n")
                 f.write(f"Exported: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
                 f.write("=" * 80 + "\n\n")
                 
@@ -111,8 +111,8 @@ class ChatInterface:
         with gr.Blocks(theme=gr.themes.Soft(), css=custom_css) as demo:
             gr.HTML("""
                 <div class="header">
-                    <h1>🤖 Gemini PDF Q&A Bot</h1>
-                    <p>Upload PDFs and ask questions using Google's Gemini AI</p>
+                    <h1>🤖 PDF Q&A Bot</h1>
+                    <p>Upload PDFs and ask questions using OpenAI</p>
                 </div>
             """)
             
@@ -163,7 +163,7 @@ class ChatInterface:
                 - Ask follow-up questions for deeper insights
                 - Use the summary feature to get a quick overview
                 
-                **Tech Stack:** LangChain • Google Gemini • ChromaDB • Gradio
+                **Tech Stack:** LangChain • OpenAI • ChromaDB • Gradio
             """)
             
             upload_btn.click(

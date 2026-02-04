@@ -4,34 +4,21 @@ from typing import List
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.vectorstores import Chroma
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
 
 class DocumentProcessor:
     """Handles PDF loading, splitting, and vector store creation"""
     
-    def __init__(self, api_key: str, provider: str = "google"):
+    def __init__(self, api_key: str):
         self.api_key = api_key
-        self.provider = provider
 
-        # Initialize embeddings based on provider (OpenAI preferred)
-        if self.provider == "openai":
-            try:
-                from langchain.embeddings import OpenAIEmbeddings
-                self.embeddings = OpenAIEmbeddings(openai_api_key=api_key)
-            except Exception:
-                self.embeddings = None
-                print("⚠️ OpenAI embeddings not available — install dependencies or set `.embeddings` manually.")
-        else:
-            try:
-                from langchain_google_genai import GoogleGenerativeAIEmbeddings
-                self.embeddings = GoogleGenerativeAIEmbeddings(
-                    model="models/embedding-001",
-                    google_api_key=api_key
-                )
-            except Exception:
-                self.embeddings = None
-                print("⚠️ Google Generative embeddings not available — install dependencies or set `.embeddings` manually.")
+        # Initialize OpenAI embeddings
+        try:
+            from langchain.embeddings import OpenAIEmbeddings
+            self.embeddings = OpenAIEmbeddings(openai_api_key=api_key)
+        except Exception:
+            self.embeddings = None
+            print("⚠️ OpenAI embeddings not available — install 'openai' and 'langchain' or set `.embeddings` manually.")
 
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=1000,

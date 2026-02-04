@@ -14,37 +14,27 @@ from ui import ChatInterface
 def main():
     """Main application entry point"""
     
-    openai_key = os.getenv("OPENAI_API_KEY")
-    google_key = os.getenv("GOOGLE_API_KEY")
-
-    api_key = None
-    provider = None
-    if openai_key:
-        api_key = openai_key
-        provider = "openai"
-    elif google_key:
-        api_key = google_key
-        provider = "google"
+    api_key = os.getenv("OPENAI_API_KEY")
 
     if not api_key:
-        print("❌ Error: OPENAI_API_KEY or GOOGLE_API_KEY not found in environment variables")
+        print("❌ Error: OPENAI_API_KEY not found in environment variables")
         print("\nCodespace secret should be automatically loaded (if you set it as a secret).")
         print("If not, create a `.env` file at the project root with:\n  OPENAI_API_KEY=your_key")
-        print("\nTo verify in the terminal: `echo $OPENAI_API_KEY` or `echo $GOOGLE_API_KEY`")
+        print("\nTo verify in the terminal: `echo $OPENAI_API_KEY`")
         print("To set a Codespace secret: `gh codespace secret set -n OPENAI_API_KEY -b <your_key>`")
         sys.exit(1)
     
     print("=" * 80)
-    print("🚀 Starting Gemini PDF Q&A Bot...")
+    print("🚀 Starting PDF Q&A Bot...")
     print("=" * 80)
     
-    print(f"\n📦 Initializing components... (provider={provider})")
-    doc_processor = DocumentProcessor(api_key, provider=provider)
-    qa_engine = QAEngine(api_key, temperature=0.2, provider=provider)
+    print("\n📦 Initializing components... (provider=openai)")
+    doc_processor = DocumentProcessor(api_key)
+    qa_engine = QAEngine(api_key, temperature=0.2)
     
     print("✓ Document Processor initialized")
     print("✓ QA Engine initialized")
-    print(f"✓ Using provider: {provider}")
+    print("✓ Using provider: openai")
     
     print("✓ Creating user interface...")
     chat_ui = ChatInterface(doc_processor, qa_engine)
