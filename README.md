@@ -22,13 +22,18 @@ Options to set it:
 - **Shell export**:
 
   ```bash
+  export OPENAI_API_KEY=your_key
+  # or fallback to Google:
   export GOOGLE_API_KEY=your_key
   ```
 
-Do not commit API keys to source control. To verify the variable is available in your environment:
+Do not commit API keys to source control. The app prefers `OPENAI_API_KEY` when set, otherwise falls back to `GOOGLE_API_KEY`. To verify the variable is available in your environment:
 
 ```bash
+# OpenAI
+echo $OPENAI_API_KEY
+# Google
 echo $GOOGLE_API_KEY
-# or
-python -c "import os; print(bool(os.getenv('GOOGLE_API_KEY')))"
+# or in python
+python -c "import os; print(bool(os.getenv('OPENAI_API_KEY') or os.getenv('GOOGLE_API_KEY')))"
 ```

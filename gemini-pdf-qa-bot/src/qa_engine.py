@@ -7,26 +7,34 @@ from langchain_community.vectorstores import Chroma
 class QAEngine:
     """Handles question-answering logic with conversation history"""
     
-    def __init__(self, api_key: str, temperature: float = 0.2):
+    def __init__(self, api_key: str, temperature: float = 0.2, provider: str = "google"):
         self.api_key = api_key
         self.temperature = temperature
+        self.provider = provider
         self.qa_chain = None
         self.chat_history = []
 
-        # Try to initialize provider LLM but don't fail in environments
-        # where `langchain_google_genai` isn't installed (e.g., unit tests).
-        try:
-            from langchain_google_genai import GoogleGenerativeAI
+        # Initialize an LLM for the selected provider (OpenAI preferred)
+        if self.provider == "openai":
+            try:
+                from langchain.chat_models import ChatOpenAI
+                self.llm = ChatOpenAI(model_name="gpt-3.5-turbo", openai_api_key=api_key, temperature=temperature)
+            except Exception:
+                self.llm = None
+                print("⚠️ ChatOpenAI not available — set `engine.llm` to a valid LLM for runtime.")
+        else:
+            try:
+                from langchain_google_genai import GoogleGenerativeAI
 
-            self.llm = GoogleGenerativeAI(
-                model="gemini-1.5-pro",
-                google_api_key=api_key,
-                temperature=temperature,
-            )
-        except Exception:
-            # LLM not available in this environment; tests or runtime should set it.
-            self.llm = None
-            print("⚠️ GoogleGenerativeAI not available — set `engine.llm` to a valid LLM for runtime.")
+                self.llm = GoogleGenerativeAI(
+                    model="gemini-1.5-pro",
+                    google_api_key=api_key,
+                    temperature=temperature,
+                )
+            except Exception:
+                # LLM not available in this environment; tests or runtime should set it.
+                self.llm = None
+                print("⚠️ GoogleGenerativeAI not available — set `engine.llm` to a valid LLM for runtime.")
     
     def setup_chain(self, vectorstore: Chroma):
         """Initialize the QA chain with retriever"""
@@ -157,4 +165,3 @@ class QAEngine:
 
         except Exception as e:
             return f"Error generating summary: {str(e)}"
-EOF

@@ -1,4 +1,3 @@
-cat > src/document_processor.py << 'EOF'
 import os
 import shutil
 from typing import List
@@ -11,12 +10,29 @@ from langchain_google_genai import GoogleGenerativeAIEmbeddings
 class DocumentProcessor:
     """Handles PDF loading, splitting, and vector store creation"""
     
-    def __init__(self, api_key: str):
+    def __init__(self, api_key: str, provider: str = "google"):
         self.api_key = api_key
-        self.embeddings = GoogleGenerativeAIEmbeddings(
-            model="models/embedding-001",
-            google_api_key=api_key
-        )
+        self.provider = provider
+
+        # Initialize embeddings based on provider (OpenAI preferred)
+        if self.provider == "openai":
+            try:
+                from langchain.embeddings import OpenAIEmbeddings
+                self.embeddings = OpenAIEmbeddings(openai_api_key=api_key)
+            except Exception:
+                self.embeddings = None
+                print("⚠️ OpenAI embeddings not available — install dependencies or set `.embeddings` manually.")
+        else:
+            try:
+                from langchain_google_genai import GoogleGenerativeAIEmbeddings
+                self.embeddings = GoogleGenerativeAIEmbeddings(
+                    model="models/embedding-001",
+                    google_api_key=api_key
+                )
+            except Exception:
+                self.embeddings = None
+                print("⚠️ Google Generative embeddings not available — install dependencies or set `.embeddings` manually.")
+
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=1000,
             chunk_overlap=200,
@@ -44,19 +60,39 @@ class DocumentProcessor:
         print(f"✓ Created {len(chunks)} chunks from documents")
         return chunks
     
-    def create_vectorstore(self, chunks: List, persist_directory: str = "./chroma_db") -> Chroma:
-        """Create or update vector store"""
+    def create_vectorstore(self, chunks: List, persist_directory: str = "./chroma_db", force_recreate: bool = False) -> Chroma:
+        """Create or update vector store.
+
+        By default, if a persist directory exists we will load it instead of
+        re-embedding to avoid unnecessary quota usage. Set `force_recreate=True`
+        to force deletion and re-creation.
+        """
+        # Ensure embeddings are configured
+        if not self.embeddings:
+            raise RuntimeError("Embeddings provider not configured — install dependencies or set `DocumentProcessor.embeddings`.")
+
         if os.path.exists(persist_directory):
-            shutil.rmtree(persist_directory)
-            print(f"✓ Cleaned old database at {persist_directory}")
-        
+            if force_recreate:
+                shutil.rmtree(persist_directory)
+                print(f"✓ Cleaned old database at {persist_directory}")
+            else:
+                # Load existing vectorstore to avoid re-embedding
+                try:
+                    vectorstore = Chroma(persist_directory=persist_directory, embedding=self.embeddings)
+                    print(f"✓ Loaded existing vector store from {persist_directory}")
+                    return vectorstore
+                except Exception:
+                    # If loading fails, remove and recreate
+                    shutil.rmtree(persist_directory)
+                    print(f"⚠️ Failed to load existing DB; recreating {persist_directory}")
+
         vectorstore = Chroma.from_documents(
             documents=chunks,
             embedding=self.embeddings,
             persist_directory=persist_directory
         )
         print(f"✓ Created vector store with {len(chunks)} chunks")
-        
+
         return vectorstore
     
     def process_files(self, file_paths: List[str], persist_directory: str = "./chroma_db"):
@@ -75,4 +111,3 @@ class DocumentProcessor:
         
         print("✅ Processing complete!\n")
         return vectorstore
-EOF
