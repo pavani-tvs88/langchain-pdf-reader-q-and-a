@@ -3,6 +3,11 @@ langchain-google-genai==0.0.6
 langchain-community==0.0.13
 chromadb==0.4.22
 pypdf==3.17.4
-gradio==4.13.0
+# Use a modern Gradio that works with the installed tooling
+gradio==4.44.1
+# Explicitly pin huggingface hub to a version compatible with Gradio and gradio-client
+huggingface_hub==0.21.1
+# Ensure the Chroma HNSW native wheel is available (helps CI/dev installs)
+chroma-hnswlib==0.7.3
 python-dotenv==1.0.0
 pytest>=7.0.0
