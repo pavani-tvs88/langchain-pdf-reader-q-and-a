@@ -1,7 +1,5 @@
-cat > src/qa_engine.py << 'EOF'
 import os
 from typing import Dict, List, Tuple
-from langchain_google_genai import GoogleGenerativeAI
 from langchain.chains import RetrievalQA
 from langchain_community.vectorstores import Chroma
 
@@ -12,13 +10,23 @@ class QAEngine:
     def __init__(self, api_key: str, temperature: float = 0.2):
         self.api_key = api_key
         self.temperature = temperature
-        self.llm = GoogleGenerativeAI(
-            model="gemini-1.5-pro",
-            google_api_key=api_key,
-            temperature=temperature
-        )
         self.qa_chain = None
         self.chat_history = []
+
+        # Try to initialize provider LLM but don't fail in environments
+        # where `langchain_google_genai` isn't installed (e.g., unit tests).
+        try:
+            from langchain_google_genai import GoogleGenerativeAI
+
+            self.llm = GoogleGenerativeAI(
+                model="gemini-1.5-pro",
+                google_api_key=api_key,
+                temperature=temperature,
+            )
+        except Exception:
+            # LLM not available in this environment; tests or runtime should set it.
+            self.llm = None
+            print("⚠️ GoogleGenerativeAI not available — set `engine.llm` to a valid LLM for runtime.")
     
     def setup_chain(self, vectorstore: Chroma):
         """Initialize the QA chain with retriever"""
@@ -105,25 +113,48 @@ class QAEngine:
         self.chat_history = []
         print("✓ Chat history cleared")
     
+    def _llm_predict(self, prompt: str) -> str:
+        """Unified LLM predict helper — tries `predict`, then falls back to calling the LLM."""
+        if not self.llm:
+            raise RuntimeError("LLM not configured: set `engine.llm` to a valid LLM instance")
+
+        # Preferred API
+        try:
+            return self.llm.predict(prompt)
+        except Exception:
+            # Fallback to calling the LLM directly (some providers implement __call__)
+            response = self.llm(prompt)
+
+            # If the LLM returns a dict, try common keys
+            if isinstance(response, dict):
+                for key in ("content", "text", "output", "result"):
+                    if key in response:
+                        return response[key]
+                # Last resort: convert to string
+                return str(response)
+
+            # If response is not dict, return string form
+            return str(response)
+
     def summarize_document(self, vectorstore: Chroma) -> str:
         """Generate a summary of the loaded documents"""
         try:
             retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
             docs = retriever.get_relevant_documents("summary overview main points")
-            
+
             combined_text = "\n\n".join([doc.page_content for doc in docs[:3]])
-            
+
             summary_prompt = f"""Provide a concise summary of the following document excerpts. 
             Focus on the main topics, key points, and overall theme:
 
             {combined_text}
-            
+
             Summary:"""
-            
-            # Use predict for LLM compatibility across providers
-            summary = self.llm.predict(summary_prompt)
+
+            # Use helper that supports predict() and fallbacks
+            summary = self._llm_predict(summary_prompt)
             return summary
-        
+
         except Exception as e:
             return f"Error generating summary: {str(e)}"
 EOF
