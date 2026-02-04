@@ -1,0 +1,11 @@
+Summary of changes:
+
+- Fix: Normalize source `page` metadata to avoid TypeError when page is missing or non-int.
+- Fix: Use chain __call__ in QA flow instead of `.invoke()` for broader LangChain compatibility.
+- Fix: Use `LLM.predict()` and add `_llm_predict` fallback to support providers that use `__call__`.
+- Add: unit tests for `QAEngine` behaviors (formatting sources, LLM fallback, chain call behavior).
+- Add: `Makefile` and `requirements-dev.txt` to aid running tests and development.
+- Docs: Add runtime guidance for `GOOGLE_API_KEY` in `README.md` and clearer `app.py` error message.
+- Remove: `gemini-pdf-qa-bot/.env.example` (project documents usage of Codespaces secrets in README; `.env` remains in `.gitignore`).
+
+Notes: Tests were added but local test runs may require building native dependencies (e.g., chroma/hnswlib) — CI or a dev environment with correct build toolchain is recommended to run the full test suite.
