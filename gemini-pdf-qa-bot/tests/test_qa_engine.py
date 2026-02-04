@@ -1,6 +1,6 @@
 import pytest
 
-from qa_engine import QAEngine
+from src.qa_engine import QAEngine
 
 
 class DummyDoc:
