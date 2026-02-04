@@ -1,4 +1,3 @@
-cat > src/ui.py << 'EOF'
 import gradio as gr
 from typing import List, Tuple
 import os
@@ -145,7 +144,7 @@ class ChatInterface:
                     chatbot = gr.Chatbot(
                         label="Conversation",
                         height=400,
-                        avatar_images=("👤", "🤖")
+                        avatar_images=None
                     )
                     
                     with gr.Row():
@@ -210,4 +209,3 @@ class ChatInterface:
             )
         
         return demo
-EOF
